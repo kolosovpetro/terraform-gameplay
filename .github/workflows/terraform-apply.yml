@@ -26,3 +26,6 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        env:
+          TF_VAR_postgres_admin_username: ${{ secrets.TF_VAR_POSTGRES_ADMIN_USERNAME }}
+          TF_VAR_postgres_admin_password: ${{ secrets.TF_VAR_POSTGRES_ADMIN_PASSWORD }}
