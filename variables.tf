@@ -9,7 +9,7 @@ variable "resource_group_name" {
 }
 
 variable "storage_account_name" {
-  default     = "messengerstorageaccount"
+  default     = "messengerstor21"
   description = "Messenger storage account name"
 }
 
