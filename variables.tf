@@ -36,12 +36,12 @@ variable "postgres_server_name" {
 #export TF_VAR_username=(the username)
 #export TF_VAR_password=(the password)
 
-variable "POSTGRES_ADMIN_USERNAME" {
+variable "postgres_admin_username" {
   type        = string
   description = "Postgres admin username"
 }
 
-variable "POSTGRES_ADMIN_PASSWORD" {
+variable "postgres_admin_password" {
   type        = string
   description = "Postgres admin password"
 }

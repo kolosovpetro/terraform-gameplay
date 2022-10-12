@@ -123,8 +123,8 @@ resource "azurerm_postgresql_flexible_server" "default" {
   version                = "13"
   delegated_subnet_id    = azurerm_subnet.default.id
   private_dns_zone_id    = azurerm_private_dns_zone.default.id
-  administrator_login    = var.POSTGRES_ADMIN_USERNAME
-  administrator_password = var.POSTGRES_ADMIN_PASSWORD
+  administrator_login    = var.postgres_admin_username
+  administrator_password = var.postgres_admin_password
   storage_mb             = 32768
   sku_name               = "B_Standard_B1ms"
   backup_retention_days  = 7

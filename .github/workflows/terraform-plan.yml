@@ -23,6 +23,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        env:
+          TF_VAR_postgres_admin_username: ${{ secrets.TF_VAR_POSTGRES_ADMIN_USERNAME }}
+          TF_VAR_postgres_admin_password: ${{ secrets.TF_VAR_POSTGRES_ADMIN_PASSWORD }}
 
       - name: Terraform Format
         run: terraform fmt -check
