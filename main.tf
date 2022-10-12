@@ -5,6 +5,18 @@ terraform {
       version = "=3.26.0"
     }
   }
+
+  # az group create -g rg-hello-azure-tf -l westus
+  # az storage account create -n pkolosovtfstate01 -g rg-hello-azure-tf -l westus --sku Standard_LRS
+  # az storage container create -n terraform-state --account-name pkolosovtfstate01
+  # az ad sp create-for-rbac --name "sp-hello-azure-tf" --role Contributor --scopes /subscriptions/fab0735b-aac3-490e-ad20-68043a66483b --sdk-auth
+
+  backend "azurerm" {
+    resource_group_name  = "rg-hello-azure-tf"
+    storage_account_name = "pkolosovtfstate"
+    container_name       = "terraform-state"
+    key                  = "terraform.tfstate"
+  }
 }
 
 # Configure the Microsoft Azure Provider
@@ -125,6 +137,8 @@ resource "azurerm_postgresql_flexible_server_database" "default" {
   server_id = azurerm_postgresql_flexible_server.default.id
   collation = "en_US.UTF8"
   charset   = "UTF8"
+
+  depends_on = [azurerm_postgresql_flexible_server.default]
 }
 # create postgres database process ends
 

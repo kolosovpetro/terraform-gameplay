@@ -4,7 +4,7 @@ variable "resource_group_location" {
 }
 
 variable "resource_group_name" {
-  default     = "rg-messenger-d02"
+  default     = "rg-messenger-d03"
   description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
 }
 
@@ -49,9 +49,4 @@ variable "postgres_admin_password" {
 variable "name_prefix" {
   default     = "postgresqlfs"
   description = "Prefix of the resource name."
-}
-
-variable "location" {
-  default     = "eastus"
-  description = "Location of the resource."
 }
