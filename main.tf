@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.0.0"
+      version = "=3.26.0"
     }
   }
 }
@@ -35,6 +35,8 @@ resource "azurerm_storage_container" "container_messenger" {
   name                  = var.storage_container_name
   storage_account_name  = var.storage_account_name
   container_access_type = "blob"
+
+  depends_on = [azurerm_storage_account.st_messenger]
 }
 
 # create postgres database process begins
@@ -117,4 +119,39 @@ resource "azurerm_postgresql_flexible_server" "default" {
 
   depends_on = [azurerm_private_dns_zone_virtual_network_link.default]
 }
+
+resource "azurerm_postgresql_flexible_server_database" "default" {
+  name      = "${var.name_prefix}-db"
+  server_id = azurerm_postgresql_flexible_server.default.id
+  collation = "en_US.UTF8"
+  charset   = "UTF8"
+}
 # create postgres database process ends
+
+# create app service process begins
+
+resource "azurerm_service_plan" "appserviceplan" {
+  name                = "messenger-appserviceplan"
+  location            = azurerm_resource_group.rg_messenger.location
+  resource_group_name = azurerm_resource_group.rg_messenger.name
+  os_type             = "Windows"
+  sku_name            = "F1"
+}
+
+resource "azurerm_windows_web_app" "webapp" {
+  name                = "app-messenger-d01"
+  location            = azurerm_resource_group.rg_messenger.location
+  resource_group_name = azurerm_resource_group.rg_messenger.name
+  service_plan_id     = azurerm_service_plan.appserviceplan.id
+  https_only          = true
+  site_config {
+    minimum_tls_version = "1.2"
+    always_on           = false
+    application_stack {
+      current_stack  = "dotnet"
+      dotnet_version = "v6.0"
+    }
+  }
+}
+
+# create app service process ends

@@ -1,5 +1,5 @@
 output "resource_group_name" {
-    value = azurerm_resource_group.default.name
+    value = azurerm_resource_group.rg_messenger.name
 }
 
 output "azurerm_postgresql_flexible_server" {
