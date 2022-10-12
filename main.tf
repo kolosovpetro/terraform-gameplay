@@ -13,7 +13,108 @@ provider "azurerm" {
 }
 
 # Create a resource group
-resource "azurerm_resource_group" "example" {
-  name     = "example-resources"
-  location = "West Europe"
+resource "azurerm_resource_group" "rg_messenger" {
+  name     = var.resource_group_name
+  location = var.resource_group_location
 }
+
+# create storage account
+resource "azurerm_storage_account" "st_messenger" {
+  name                     = var.storage_account_name
+  resource_group_name      = azurerm_resource_group.rg_messenger.name
+  location                 = azurerm_resource_group.rg_messenger.location
+  account_tier             = var.storage_account_tier
+  account_replication_type = var.storage_account_replication
+
+  tags = {
+    environment = "development"
+  }
+}
+
+resource "azurerm_storage_container" "container_messenger" {
+  name                  = var.storage_container_name
+  storage_account_name  = var.storage_account_name
+  container_access_type = "blob"
+}
+
+# create postgres database process begins
+resource "azurerm_virtual_network" "default" {
+  name                = "${var.name_prefix}-vnet"
+  location            = azurerm_resource_group.rg_messenger.location
+  resource_group_name = azurerm_resource_group.rg_messenger.name
+  address_space       = ["10.0.0.0/16"]
+}
+
+resource "azurerm_network_security_group" "default" {
+  name                = "${var.name_prefix}-nsg"
+  location            = azurerm_resource_group.rg_messenger.location
+  resource_group_name = azurerm_resource_group.rg_messenger.name
+
+  security_rule {
+    name                       = "test123"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+resource "azurerm_subnet" "default" {
+  name                 = "${var.name_prefix}-subnet"
+  virtual_network_name = azurerm_virtual_network.default.name
+  resource_group_name  = azurerm_resource_group.rg_messenger.name
+  address_prefixes     = ["10.0.2.0/24"]
+  service_endpoints    = ["Microsoft.Storage"]
+
+  delegation {
+    name = "fs"
+
+    service_delegation {
+      name = "Microsoft.DBforPostgreSQL/flexibleServers"
+
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+      ]
+    }
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "default" {
+  subnet_id                 = azurerm_subnet.default.id
+  network_security_group_id = azurerm_network_security_group.default.id
+}
+
+resource "azurerm_private_dns_zone" "default" {
+  name                = "${var.name_prefix}-pdz.postgres.database.azure.com"
+  resource_group_name = azurerm_resource_group.rg_messenger.name
+
+  depends_on = [azurerm_subnet_network_security_group_association.default]
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "default" {
+  name                  = "${var.name_prefix}-pdzvnetlink.com"
+  private_dns_zone_name = azurerm_private_dns_zone.default.name
+  virtual_network_id    = azurerm_virtual_network.default.id
+  resource_group_name   = azurerm_resource_group.rg_messenger.name
+}
+
+resource "azurerm_postgresql_flexible_server" "default" {
+  name                   = "${var.name_prefix}-server"
+  resource_group_name    = azurerm_resource_group.rg_messenger.name
+  location               = azurerm_resource_group.rg_messenger.location
+  version                = "13"
+  delegated_subnet_id    = azurerm_subnet.default.id
+  private_dns_zone_id    = azurerm_private_dns_zone.default.id
+  administrator_login    = var.postgres_admin_username
+  administrator_password = var.postgres_admin_password
+  storage_mb             = 32768
+  sku_name               = "B_Standard_B1ms"
+  backup_retention_days  = 7
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.default]
+}
+# create postgres database process ends

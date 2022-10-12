@@ -19,6 +19,8 @@
 *.tfplan
 *.tfstate
 /.terraform
+*.backup
+*.lock.info
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
