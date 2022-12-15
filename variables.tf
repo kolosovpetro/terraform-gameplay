@@ -4,12 +4,12 @@ variable "resource_group_location" {
 }
 
 variable "resource_group_name" {
-  default     = "rg-messenger-d03"
+  default     = "rg-messenger-d04"
   description = "Prefix of the resource group name that's combined with a random ID so name is unique in your Azure subscription."
 }
 
 variable "storage_account_name" {
-  default     = "messengerstor21"
+  default     = "mangostoraged04"
   description = "Messenger storage account name"
 }
 
@@ -28,25 +28,35 @@ variable "storage_container_name" {
   description = "Messenger storage container name"
 }
 
-variable "postgres_server_name" {
-  default     = "psql-messenger-d01"
-  description = "Messenger postgres server name"
+variable "appservice_plan_name" {
+  default     = "messenger-appserviceplan04"
+  description = "Name of the App Service Plan"
+}
+
+variable "appservice_name" {
+  default     = "app-messenger-d04"
+  description = "Name of the App Service"
+}
+
+variable "sql_server_name" {
+  default     = "mango-sql-db-d04"
+  description = "Messenger sql server name"
 }
 
 #export TF_VAR_username=(the username)
 #export TF_VAR_password=(the password)
 
-variable "postgres_admin_username" {
+variable "sql_admin_username" {
   type        = string
-  description = "Postgres admin username"
+  description = "Sql admin username"
 }
 
-variable "postgres_admin_password" {
+variable "sql_admin_password" {
   type        = string
-  description = "Postgres admin password"
+  description = "Sql admin password"
 }
 
-variable "name_prefix" {
-  default     = "postgresqlfs"
-  description = "Prefix of the resource name."
+variable "sql_database_name" {
+  default     = "mango_dev"
+  description = "Name of the Sql Database"
 }

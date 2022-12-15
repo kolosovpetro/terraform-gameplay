@@ -14,12 +14,10 @@ terraform {
   }
 }
 
-# Configure the Microsoft Azure Provider
 provider "azurerm" {
   features {}
 }
 
-# Create a resource group
 resource "azurerm_resource_group" "rg_messenger" {
   name     = var.resource_group_name
   location = var.resource_group_location
@@ -32,10 +30,6 @@ resource "azurerm_storage_account" "st_messenger" {
   location                 = azurerm_resource_group.rg_messenger.location
   account_tier             = var.storage_account_tier
   account_replication_type = var.storage_account_replication
-
-  tags = {
-    environment = "development"
-  }
 }
 
 resource "azurerm_storage_container" "container_messenger" {
@@ -46,101 +40,10 @@ resource "azurerm_storage_container" "container_messenger" {
   depends_on = [azurerm_storage_account.st_messenger]
 }
 
-# create postgres database process begins
-resource "azurerm_virtual_network" "default" {
-  name                = "${var.name_prefix}-vnet"
-  location            = azurerm_resource_group.rg_messenger.location
-  resource_group_name = azurerm_resource_group.rg_messenger.name
-  address_space       = ["10.0.0.0/16"]
-}
-
-resource "azurerm_network_security_group" "default" {
-  name                = "${var.name_prefix}-nsg"
-  location            = azurerm_resource_group.rg_messenger.location
-  resource_group_name = azurerm_resource_group.rg_messenger.name
-
-  security_rule {
-    name                       = "test123"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-}
-
-resource "azurerm_subnet" "default" {
-  name                 = "${var.name_prefix}-subnet"
-  virtual_network_name = azurerm_virtual_network.default.name
-  resource_group_name  = azurerm_resource_group.rg_messenger.name
-  address_prefixes     = ["10.0.2.0/24"]
-  service_endpoints    = ["Microsoft.Storage"]
-
-  delegation {
-    name = "fs"
-
-    service_delegation {
-      name = "Microsoft.DBforPostgreSQL/flexibleServers"
-
-      actions = [
-        "Microsoft.Network/virtualNetworks/subnets/join/action",
-      ]
-    }
-  }
-}
-
-resource "azurerm_subnet_network_security_group_association" "default" {
-  subnet_id                 = azurerm_subnet.default.id
-  network_security_group_id = azurerm_network_security_group.default.id
-}
-
-resource "azurerm_private_dns_zone" "default" {
-  name                = "${var.name_prefix}-pdz.postgres.database.azure.com"
-  resource_group_name = azurerm_resource_group.rg_messenger.name
-
-  depends_on = [azurerm_subnet_network_security_group_association.default]
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "default" {
-  name                  = "${var.name_prefix}-pdzvnetlink.com"
-  private_dns_zone_name = azurerm_private_dns_zone.default.name
-  virtual_network_id    = azurerm_virtual_network.default.id
-  resource_group_name   = azurerm_resource_group.rg_messenger.name
-}
-
-resource "azurerm_postgresql_flexible_server" "default" {
-  name                   = "${var.name_prefix}-server"
-  resource_group_name    = azurerm_resource_group.rg_messenger.name
-  location               = azurerm_resource_group.rg_messenger.location
-  version                = "13"
-  delegated_subnet_id    = azurerm_subnet.default.id
-  private_dns_zone_id    = azurerm_private_dns_zone.default.id
-  administrator_login    = var.postgres_admin_username
-  administrator_password = var.postgres_admin_password
-  storage_mb             = 32768
-  sku_name               = "B_Standard_B1ms"
-  backup_retention_days  = 7
-
-  depends_on = [azurerm_private_dns_zone_virtual_network_link.default]
-}
-
-resource "azurerm_postgresql_flexible_server_database" "default" {
-  name      = "${var.name_prefix}-db"
-  server_id = azurerm_postgresql_flexible_server.default.id
-  collation = "en_US.UTF8"
-  charset   = "UTF8"
-
-  depends_on = [azurerm_postgresql_flexible_server.default]
-}
-# create postgres database process ends
-
 # create app service process begins
 
 resource "azurerm_service_plan" "appserviceplan" {
-  name                = "messenger-appserviceplan"
+  name                = var.appservice_plan_name
   location            = azurerm_resource_group.rg_messenger.location
   resource_group_name = azurerm_resource_group.rg_messenger.name
   os_type             = "Windows"
@@ -148,7 +51,7 @@ resource "azurerm_service_plan" "appserviceplan" {
 }
 
 resource "azurerm_windows_web_app" "webapp" {
-  name                = "app-messenger-d03"
+  name                = var.appservice_name
   location            = azurerm_resource_group.rg_messenger.location
   resource_group_name = azurerm_resource_group.rg_messenger.name
   service_plan_id     = azurerm_service_plan.appserviceplan.id
@@ -164,3 +67,30 @@ resource "azurerm_windows_web_app" "webapp" {
 }
 
 # create app service process ends
+
+# create sql database process begins
+
+resource "azurerm_mssql_server" "mango_sql_server" {
+  name                         = var.sql_server_name
+  resource_group_name          = azurerm_resource_group.rg_messenger.name
+  location                     = azurerm_resource_group.rg_messenger.location
+  version                      = "12.0"
+  administrator_login          = var.sql_admin_username
+  administrator_login_password = var.sql_admin_password
+
+  tags = {
+    environment = "development"
+  }
+}
+
+resource "azurerm_mssql_database" "mango_dev_db" {
+  name           = var.sql_database_name
+  server_id      = azurerm_mssql_server.mango_sql_server.id
+  license_type   = "LicenseIncluded"
+  max_size_gb    = 2
+  read_scale     = false
+  sku_name       = "S0"
+  zone_redundant = false
+}
+
+# create sql database process ends
