@@ -6,15 +6,10 @@ terraform {
     }
   }
 
-  # az group create -g rg-hello-azure-tf -l westus
-  # az storage account create -n pkolosovtfstate01 -g rg-hello-azure-tf -l westus --sku Standard_LRS
-  # az storage container create -n terraform-state --account-name pkolosovtfstate01
-  # az ad sp create-for-rbac --name "sp-hello-azure-tf" --role Contributor --scopes /subscriptions/fab0735b-aac3-490e-ad20-68043a66483b --sdk-auth
-
   backend "azurerm" {
-    resource_group_name  = "rg-hello-azure-tf"
-    storage_account_name = "pkolosovtfstate01"
-    container_name       = "terraform-state"
+    resource_group_name  = "pkolosov-tstate-rg"
+    storage_account_name = "pkolosovfstate673"
+    container_name       = "pkolosovtfstate"
     key                  = "terraform.tfstate"
   }
 }
@@ -153,7 +148,7 @@ resource "azurerm_service_plan" "appserviceplan" {
 }
 
 resource "azurerm_windows_web_app" "webapp" {
-  name                = "app-messenger-d01"
+  name                = "app-messenger-d03"
   location            = azurerm_resource_group.rg_messenger.location
   resource_group_name = azurerm_resource_group.rg_messenger.name
   service_plan_id     = azurerm_service_plan.appserviceplan.id
