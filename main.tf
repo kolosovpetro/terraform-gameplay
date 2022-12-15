@@ -6,15 +6,10 @@ terraform {
     }
   }
 
-  # az group create -g rg-hello-azure-tf -l westus
-  # az storage account create -n pkolosovtfstate01 -g rg-hello-azure-tf -l westus --sku Standard_LRS
-  # az storage container create -n terraform-state --account-name pkolosovtfstate01
-  # az ad sp create-for-rbac --name "sp-hello-azure-tf" --role Contributor --scopes /subscriptions/fab0735b-aac3-490e-ad20-68043a66483b --sdk-auth
-
   backend "azurerm" {
-    resource_group_name  = "rg-hello-azure-tf"
-    storage_account_name = "pkolosovtfstate01"
-    container_name       = "terraform-state"
+    resource_group_name  = "pkolosov-tstate-rg"
+    storage_account_name = "pkolosovfstate673"
+    container_name       = "pkolosovtfstate"
     key                  = "terraform.tfstate"
   }
 }
@@ -169,3 +164,30 @@ resource "azurerm_windows_web_app" "webapp" {
 }
 
 # create app service process ends
+
+resource "azurerm_sql_server" "example" {
+  name                         = "myexamplesqlserver"
+  resource_group_name          = azurerm_resource_group.example.name
+  location                     = azurerm_resource_group.example.location
+  version                      = "12.0"
+  administrator_login          = "4dm1n157r470r"
+  administrator_login_password = "4-v3ry-53cr37-p455w0rd"
+
+  tags = {
+    environment = "production"
+  }
+}
+
+resource "azurerm_sql_database" "example" {
+  name                = "myexamplesqldatabase"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  server_name         = azurerm_sql_server.example.name
+  requested_service_objective_name = "Free"
+
+
+
+  tags = {
+    environment = "production"
+  }
+}
