@@ -17,7 +17,7 @@
 ## Define variables
 
 - `$RESOURCE_GROUP_NAME="pkolosov-tstate-rg"`
-- `$STORAGE_ACCOUNT_NAME="pkolosovfstate$(Get-Random 1000)"`
+- `$STORAGE_ACCOUNT_NAME="pkolosovfstate673"`
 - `$CONTAINER_NAME="pkolosovtfstate"`
 
 ## Create resource group
